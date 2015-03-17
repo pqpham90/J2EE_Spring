@@ -15,6 +15,7 @@ public class MeetingsQueryServiceImpl implements QueryService {
 	String baseURL = "";
 	String project = "";
 
+	// hack cause it kept appending to the url when doing new runs
 	protected void resetUrl() {
 		eavesdropURL = null;
 		baseURL = "http://eavesdrop.openstack.org/";
@@ -29,8 +30,31 @@ public class MeetingsQueryServiceImpl implements QueryService {
 		resetUrl();
 	}
 
+	// check to see if project exists
+	public int checkEavesDropConnection (String projectName) {
+		int connect = 0;
+
+		resetUrl();
+		project = projectName;
+		baseURL += "meetings/" + project;
+		try {
+			eavesdropURL = new URL(baseURL);
+			URLConnection connection = eavesdropURL.openConnection();
+			BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			in.close();
+			connect = 1;
+		}
+		catch (Exception e) {
+			connect = -1;
+			e.printStackTrace();
+		}
+
+		return connect;
+	}
+
+	// returns a array of the years found in the project
 	public String[] getYearsFromEavesDrop(String projectName) {
-		String[] years = new String[0];
+		String[] years = new String[1];
 
 		resetUrl();
 		project = projectName;
@@ -39,14 +63,17 @@ public class MeetingsQueryServiceImpl implements QueryService {
 			eavesdropURL = new URL(baseURL);
 			URLConnection connection = eavesdropURL.openConnection();
 			String readData = readDataFromEavesdrop(connection);
+
 			years = checkForYears(readData);
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 
 		return years;
 	}
 
+	// gets the response from the page
 	protected String readDataFromEavesdrop(URLConnection connection) {
 		String retVal = "";
 		try {
@@ -64,6 +91,7 @@ public class MeetingsQueryServiceImpl implements QueryService {
 		return retVal;
 	}
 
+	// gets the years from the page
 	protected String[] checkForYears (String inputString) {
 		ArrayList<String> years = new ArrayList<String>();
 		try {
@@ -89,6 +117,7 @@ public class MeetingsQueryServiceImpl implements QueryService {
 		return retVal;
 	}
 
+	// found the number of logs in th year
 	public int countLogs(String year) {
 		resetUrl();
 
@@ -112,7 +141,8 @@ public class MeetingsQueryServiceImpl implements QueryService {
 				}
 			}
 
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 
